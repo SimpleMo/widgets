@@ -10,6 +10,17 @@ public class Widget {
     private Long zIndex;
     private UUID uuid = UUID.randomUUID();
 
+    public Widget() {
+    }
+
+    public Widget(Long x, Long y, Long width, Long height, Long zIndex) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.zIndex = zIndex;
+    }
+
     public Long getX() {
         return x;
     }
@@ -54,4 +65,31 @@ public class Widget {
         return uuid;
     }
 
+    public void increaseZIndex(){
+        zIndex++;
+    }
+
+    /**
+     * Равенство двух виджетов устанавливаем через равенство их uuid
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Widget widget = (Widget) o;
+
+        return uuid.equals(widget.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return uuid.hashCode();
+    }
 }
