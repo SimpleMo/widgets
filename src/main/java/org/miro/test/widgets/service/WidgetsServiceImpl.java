@@ -56,7 +56,9 @@ public class WidgetsServiceImpl implements WidgetsService {
     private void correctZIndex(Long zIndex) {
         widgets.entrySet().stream()
                 .filter(entry -> entry.getValue().getzIndex().compareTo(zIndex) >= 0)
-                .forEach(entry -> entry.getValue().increaseZIndex());
+                .forEach(entry -> {
+                    entry.getValue().visit(widget -> widget.setzIndex(widget.getzIndex() + 1));
+                });
     }
 
 }

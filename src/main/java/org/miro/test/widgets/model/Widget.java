@@ -1,6 +1,7 @@
 package org.miro.test.widgets.model;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class Widget {
     private Long x;
@@ -65,8 +66,12 @@ public class Widget {
         return uuid;
     }
 
-    public void increaseZIndex(){
-        zIndex++;
+    /**
+     * Метод для добавления функциональности
+     * @param visitor
+     */
+    public void visit(Consumer<Widget> visitor){
+        visitor.accept(this);
     }
 
     /**
