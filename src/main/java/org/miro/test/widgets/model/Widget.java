@@ -2,6 +2,7 @@ package org.miro.test.widgets.model;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class Widget {
     private Long x;
@@ -67,11 +68,24 @@ public class Widget {
     }
 
     /**
-     * Метод для добавления функциональности
-     * @param visitor
+     * Рееализация шаблона Посетитель, предназначен для добавления функциональности классу виджетов.
+     * Пока используем только для увеличения zIndex. Если что-то ещё понадобится, достаточно будет просто вызвать данный меитод с нудной лямбдой.
+     *
+     * @param visitor класс, инкапсулирующий поведение
      */
-    public void visit(Consumer<Widget> visitor){
+    public void visit(Consumer<Widget> visitor) {
         visitor.accept(this);
+    }
+
+    /**
+     * Реализация шаблона Посетитель, предназначен для вычисления предикатов над виджетом.
+     * Пока используем только для вычисления пересечения. Если понадобится, достаточно вызвать с другой лямбдой.
+     *
+     * @param visitor класс, инкапсулирующий вычисление предиката
+     * @return результат вычислений
+     */
+    public Boolean test(Predicate<Widget> visitor) {
+        return visitor.test(this);
     }
 
     /**
