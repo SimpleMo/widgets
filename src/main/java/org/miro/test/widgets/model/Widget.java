@@ -59,6 +59,7 @@ public class Widget {
         return zIndex;
     }
 
+    //TODO подумать. Возможно, тут нужен lighweight (ссылка на некий объект - слой, поскольку вохможна ситуация с несколькими виджетами на слое)
     public void setzIndex(Long zIndex) {
         this.zIndex = zIndex;
     }

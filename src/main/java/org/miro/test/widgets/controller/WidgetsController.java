@@ -1,12 +1,10 @@
 package org.miro.test.widgets.controller;
 
+import org.miro.test.widgets.exceptions.NotFoundException;
 import org.miro.test.widgets.model.Widget;
 import org.miro.test.widgets.service.WidgetsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
@@ -25,7 +23,18 @@ public class WidgetsController {
 
     @GetMapping("{uuid}")
     public Widget getWidget(@PathVariable UUID uuid){
-        return widgetsService.findByUuid(uuid);
+        Widget result = widgetsService.findByUuid(uuid);
+        if(result == null){
+            throw new NotFoundException();
+        }
+        return result;
+    }
+
+    @PostMapping
+    public Widget create(@RequestBody() Long x, @RequestBody() Long y, @RequestBody(required = false) Long zIndex, @RequestBody() Long width, @RequestBody() Long height) {
+        Widget widget = widgetsService.createWidget(x, y, zIndex, width, height);
+        return widget;
+
     }
 
     private List<Widget> getWidgetList() {

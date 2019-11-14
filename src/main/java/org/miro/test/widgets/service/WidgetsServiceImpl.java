@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Service
 public class WidgetsServiceImpl implements WidgetsService {
@@ -27,14 +28,20 @@ public class WidgetsServiceImpl implements WidgetsService {
         return widget;
     }
 
+    @Override
+    public Widget updateWidget(UUID uuid, Long x, Long y, Long zIndex, Long width, Long height) {
+        return null;
+    }
+
     /**
      * Метод возвращает новый виджет с переданными координатами, размерами и Z-Index
-     * @param x
-     * @param y
-     * @param zIndex
-     * @param width
-     * @param height
-     * @return
+     *
+     * @param x      x-координата виджета не может быть null
+     * @param y      y-координата виджета не может быть null
+     * @param zIndex Z-Index- виджета может быть null
+     * @param width  ширина виджета не может быть null
+     * @param height высота не может быть null
+     * @return новый виджет
      */
     private Widget getNewWidget(@NonNull Long x, @NonNull Long y, Long zIndex, @NonNull Long width, @NonNull Long height) {
         Widget widget;
@@ -54,11 +61,10 @@ public class WidgetsServiceImpl implements WidgetsService {
      * @param zIndex индекс
      */
     private void correctZIndex(Long zIndex) {
+        Consumer<Widget> consumer = widget -> widget.setzIndex(widget.getzIndex() + 1);
         widgets.entrySet().stream()
                 .filter(entry -> entry.getValue().getzIndex().compareTo(zIndex) >= 0)
-                .forEach(entry -> {
-                    entry.getValue().visit(widget -> widget.setzIndex(widget.getzIndex() + 1));
-                });
+                .forEach(entry ->  entry.getValue().visit(consumer));
     }
 
 }
