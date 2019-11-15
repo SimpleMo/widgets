@@ -4,15 +4,22 @@ import org.miro.test.widgets.model.Widget;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 @Service
 public class WidgetsServiceImpl implements WidgetsService {
     private Map<UUID, Widget> widgets = new HashMap<>();
     private Long defaultZIndex = 0L;
+
+    @Override
+    public List<Widget> getWidgets() {
+        if(widgets.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return new ArrayList<>(widgets.values());
+    }
 
     @Override
     public Widget findByUuid(UUID uuid) {
@@ -28,8 +35,45 @@ public class WidgetsServiceImpl implements WidgetsService {
         return widget;
     }
 
+    private void putToSortedMap(SortedMap<Long, List<Widget>> sortedMap, Long key, Widget value) {
+        if(!sortedMap.containsKey(key)){
+            sortedMap.put(key, new LinkedList<>());
+        }
+        sortedMap.get(key).add(value);
+    }
+
     @Override
     public Widget updateWidget(UUID uuid, Long x, Long y, Long zIndex, Long width, Long height) {
+        Widget result = widgets.get(uuid);
+        if(result == null){ // не нашлось, обновлять нечего
+            return null;
+        }
+
+        Consumer<Widget> widgetUpdater =
+                widget -> {
+                    widget.setX(x != null ? x : widget.getX());
+                    widget.setY(y != null ? y : widget.getY());
+                    widget.setzIndex(zIndex != null ? zIndex : widget.getzIndex());
+                    widget.setWidth(width != null ? width : widget.getWidth());
+                    widget.setHeight(height != null ? height : widget.getHeight());
+                };
+        result.visit(widgetUpdater);
+        return result;
+    }
+
+    @Override
+    public Widget deleteWidget(UUID uuid) {
+        Widget result = widgets.get(uuid);
+        if(result == null){
+            return null;
+        }
+
+        widgets.remove(uuid);
+        return result;
+    }
+
+    @Override
+    public List<Widget> getWidgetByPosition() {
         return null;
     }
 
@@ -45,7 +89,7 @@ public class WidgetsServiceImpl implements WidgetsService {
      */
     private Widget getNewWidget(@NonNull Long x, @NonNull Long y, Long zIndex, @NonNull Long width, @NonNull Long height) {
         Widget widget;
-        if (zIndex == null) { // в э том случае помещаем на передний план
+        if (zIndex == null) { // в этом случае помещаем на передний план
             return new Widget(x, y, width, height, defaultZIndex);
         }
         widget = new Widget(x, y, width, height, zIndex);

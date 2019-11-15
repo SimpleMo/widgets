@@ -2,6 +2,7 @@ package org.miro.test.widgets.controller;
 
 import org.miro.test.widgets.exceptions.NotFoundException;
 import org.miro.test.widgets.model.Widget;
+import org.miro.test.widgets.model.WidgetRequest;
 import org.miro.test.widgets.service.WidgetsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +18,7 @@ public class WidgetsController {
 
     @GetMapping
     public List<Widget> getWidgets(){
-        List<Widget> widgets = getWidgetList();
-        return widgets;
+        return widgetsService.getWidgets();
     }
 
     @GetMapping("{uuid}")
@@ -30,12 +30,30 @@ public class WidgetsController {
         return result;
     }
 
-    @PostMapping
-    public Widget create(@RequestBody() Long x, @RequestBody() Long y, @RequestBody(required = false) Long zIndex, @RequestBody() Long width, @RequestBody() Long height) {
-        Widget widget = widgetsService.createWidget(x, y, zIndex, width, height);
-        return widget;
-
+    @PostMapping()
+    public Widget create(@RequestBody WidgetRequest widget) {
+        Widget result = widgetsService.createWidget(widget.getX(), widget.getY(), widget.getzIndex(), widget.getWidth(), widget.getHeight());
+        return result;
     }
+
+    @PutMapping("{uuid}")
+    public Widget update(@PathVariable UUID uuid, @RequestBody WidgetRequest widget){
+        Widget result = widgetsService.updateWidget(uuid, widget.getX(), widget.getY(), widget.getzIndex(), widget.getWidth(), widget.getHeight());
+        if(result == null){
+            throw new NotFoundException();
+        }
+
+        return result;
+    }
+
+    @DeleteMapping("{uuid}")
+    public void delete(@PathVariable UUID uuid){
+        Widget deleted = widgetsService.deleteWidget(uuid);
+        if(deleted == null){
+            throw new NotFoundException();
+        }
+    }
+
 
     private List<Widget> getWidgetList() {
         Widget widget = new Widget();
