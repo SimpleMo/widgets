@@ -1,7 +1,9 @@
 package org.miro.test.widgets.service;
 
 import org.miro.test.widgets.model.Widget;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -11,6 +13,9 @@ import java.util.function.Consumer;
 public class WidgetsServiceImpl implements WidgetsService {
     private Map<UUID, Widget> widgets = new HashMap<>();
     private Long defaultZIndex = 0L;
+
+    @Autowired
+    private SpatialService spatialService;
 
     @Override
     public List<Widget> getWidgets() {
@@ -49,27 +54,48 @@ public class WidgetsServiceImpl implements WidgetsService {
             return null;
         }
 
+        //Меняем значения атрибутов виджета и при необходимости перестраиваем индексы
         Consumer<Widget> widgetUpdater =
                 widget -> {
-                    widget.setX(x != null ? x : widget.getX());
-                    widget.setY(y != null ? y : widget.getY());
+                    updateAndRearrangeWithCheck(x, widget.getX(), widget.getUuid(), spatialService::rearrangeByXIndex, widget::setX);
+                    updateAndRearrangeWithCheck(y, widget.getY(), widget.getUuid(), spatialService::rearrangeByYIndex, widget::setY);
+                    updateAndRearrangeWithCheck(width, widget.getWidth(), widget.getUuid(), spatialService::rearrangeByWidthIndex, widget::setWidth);
+                    updateAndRearrangeWithCheck(height, widget.getHeight(), widget.getUuid(), spatialService::rearrangeByHeightIndex, widget::setWidth);
                     widget.setzIndex(zIndex != null ? zIndex : widget.getzIndex());
-                    widget.setWidth(width != null ? width : widget.getWidth());
-                    widget.setHeight(height != null ? height : widget.getHeight());
                 };
         result.visit(widgetUpdater);
         return result;
     }
 
+    /**
+     * Вспомогательный метод для обновления атрибутов виджета и перестройки индекса
+     *
+     * @param value        новое значение атрибута
+     * @param oldValue     старое значение атрибута
+     * @param uuid         идентификатор виджета
+     * @param rearranger   метод для перестройки индекса
+     * @param valueChanger метод для смены старого значения на новое
+     */
+    private void updateAndRearrangeWithCheck(@Nullable Long value, @NonNull Long oldValue, @NonNull UUID uuid, @NonNull TernaryConsumer<Long, Long, UUID> rearranger, @NonNull Consumer<Long> valueChanger) {
+        if (value == null || value.compareTo(oldValue) == 0) {
+            return;
+        }
+        rearranger.accept(oldValue, value, uuid);
+        valueChanger.accept(value);
+    }
+
     @Override
     public Widget deleteWidget(UUID uuid) {
-        Widget result = widgets.get(uuid);
-        if(result == null){
+        Widget widget = widgets.get(uuid);
+        if(widget == null){
             return null;
         }
 
+        //Удаляем найденное из всех индексов и списков
+        spatialService.removeFromIndexes(widget);
         widgets.remove(uuid);
-        return result;
+
+        return widget;
     }
 
     @Override
@@ -97,6 +123,13 @@ public class WidgetsServiceImpl implements WidgetsService {
         if (defaultZIndex.compareTo(zIndex) > 0) { // передний план мог поменяться...
             defaultZIndex = zIndex;
         }
+
+        //Ну и добавим в индексы...
+        spatialService.addToByXIndex(widget.getX(), widget.getUuid());
+        spatialService.addToByYIndex(widget.getY(), widget.getUuid());
+        spatialService.addToByWidthIndex(widget.getWidth(), widget.getUuid());
+        spatialService.addToByHeightIndex(widget.getHeight(), widget.getUuid());
+
         return widget;
     }
 
