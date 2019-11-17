@@ -30,6 +30,11 @@ public class WidgetsController {
         return result;
     }
 
+    @GetMapping("/by-position")
+    public List<Widget> getByPositions(@RequestParam("x") Long x, @RequestParam("y") Long y, @RequestParam("width") Long width, @RequestParam("height") Long height){
+        return widgetsService.findWidgetByPosition(x, y, width, height);
+    }
+
     @PostMapping()
     public Widget create(@RequestBody WidgetRequest widget) {
         Widget result = widgetsService.createWidget(widget.getX(), widget.getY(), widget.getzIndex(), widget.getWidth(), widget.getHeight());
@@ -46,7 +51,7 @@ public class WidgetsController {
         return result;
     }
 
-    @DeleteMapping("{uuid}")
+    @DeleteMapping("/{uuid}")
     public void delete(@PathVariable UUID uuid){
         Widget deleted = widgetsService.deleteWidget(uuid);
         if(deleted == null){

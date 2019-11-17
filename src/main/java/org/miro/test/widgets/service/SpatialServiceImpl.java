@@ -1,6 +1,7 @@
 package org.miro.test.widgets.service;
 
 import org.miro.test.widgets.model.Widget;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -9,6 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
+@Primary
 public class SpatialServiceImpl implements SpatialService {
     private SortedMap<Long, Set<UUID>> indexByX = new TreeMap<>(Long::compareTo);
     private SortedMap<Long, Set<UUID>> indexByY = new TreeMap<>(Long::compareTo);
@@ -37,8 +39,8 @@ public class SpatialServiceImpl implements SpatialService {
         }
 
         //Нам подходят только те UUID, которые есть во всех множествах одновременно. Собираем из них результат.
-        HashSet<UUID> result =
-                byX.stream().filter(byY::contains).filter(byWidth::contains).filter(byHeight::contains).collect(Collectors.toCollection(HashSet::new));
+        Set<UUID> result =
+                byX.stream().filter(byY::contains).filter(byWidth::contains).filter(byHeight::contains).collect(Collectors.toSet());
         return result;
     }
 

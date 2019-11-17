@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 public class WidgetsServiceImpl implements WidgetsService {
@@ -34,7 +36,9 @@ public class WidgetsServiceImpl implements WidgetsService {
     @Override
     public Widget createWidget(Long x, Long y, Long zIndex, Long width, Long height) {
         Widget widget = getNewWidget(x, y, zIndex, width, height);
-        correctZIndex(widget.getzIndex());
+        if(zIndex != null){
+            correctZIndex(widget.getzIndex());
+        }
         widgets.put(widget.getUuid(), widget);
 
         return widget;
@@ -99,8 +103,13 @@ public class WidgetsServiceImpl implements WidgetsService {
     }
 
     @Override
-    public List<Widget> getWidgetByPosition() {
-        return null;
+    public List<Widget> findWidgetByPosition(Long x, Long y, Long width, Long height) {
+        Set<UUID> uuids = spatialService.findByPosition(x, y, width, height);
+        if(CollectionUtils.isEmpty(uuids)){
+            return new ArrayList<>();
+        }
+
+        return widgets.values().stream().filter(widget -> uuids.contains(widget.getUuid())).collect(Collectors.toList());
     }
 
     /**
@@ -114,13 +123,12 @@ public class WidgetsServiceImpl implements WidgetsService {
      * @return новый виджет
      */
     private Widget getNewWidget(@NonNull Long x, @NonNull Long y, Long zIndex, @NonNull Long width, @NonNull Long height) {
-        Widget widget;
-        if (zIndex == null) { // в этом случае помещаем на передний план
-            return new Widget(x, y, width, height, defaultZIndex);
-        }
-        widget = new Widget(x, y, width, height, zIndex);
+        Widget widget = new Widget(x, y, width, height, zIndex == null ? defaultZIndex : zIndex);
 
-        if (defaultZIndex.compareTo(zIndex) > 0) { // передний план мог поменяться...
+        //Передний план мог поменяться...
+        if (zIndex == null) {
+            defaultZIndex--;
+        } else if (defaultZIndex.compareTo(zIndex) >= 0) {
             defaultZIndex = zIndex;
         }
 

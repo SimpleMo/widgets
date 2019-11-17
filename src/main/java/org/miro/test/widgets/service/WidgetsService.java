@@ -52,5 +52,5 @@ public interface WidgetsService {
      */
     Widget deleteWidget(@NonNull UUID uuid);
 
-    List<Widget> getWidgetByPosition();
+    List<Widget> findWidgetByPosition(Long x, Long y, Long width, Long height);
 }
