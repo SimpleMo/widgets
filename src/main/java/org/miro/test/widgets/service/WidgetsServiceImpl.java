@@ -61,10 +61,22 @@ public class WidgetsServiceImpl implements WidgetsService {
         //Меняем значения атрибутов виджета и при необходимости перестраиваем индексы
         Consumer<Widget> widgetUpdater =
                 widget -> {
-                    updateAndRearrangeWithCheck(x, widget.getX(), widget.getUuid(), spatialService::rearrangeByXIndex, widget::setX);
-                    updateAndRearrangeWithCheck(y, widget.getY(), widget.getUuid(), spatialService::rearrangeByYIndex, widget::setY);
-                    updateAndRearrangeWithCheck(width, widget.getWidth(), widget.getUuid(), spatialService::rearrangeByWidthIndex, widget::setWidth);
-                    updateAndRearrangeWithCheck(height, widget.getHeight(), widget.getUuid(), spatialService::rearrangeByHeightIndex, widget::setWidth);
+                    updateAndRearrangeWithCheck(x, widget.getX(), x, widget.getUuid(), spatialService::rearrangeByLeftSideIndex, widget::setX);
+                    updateAndRearrangeWithCheck(y, widget.getY(), y, widget.getUuid(), spatialService::rearrangeByTopSideIndex, widget::setY);
+                    if(x != null || width != null){
+                        updateAndRearrangeWithCheck(
+                                (x != null ? x : widget.getX()) + (width != null ? width : widget.getWidth()),
+                                widget.getX() + widget.getWidth(),
+                                width, widget.getUuid(),
+                                spatialService::rearrangeByRightSideIndex, widget::setWidth);
+                    }
+                    if (y != null || height != null) {
+                        updateAndRearrangeWithCheck(
+                                (y != null ? y : widget.getY()) - (height != null ? height : widget.getHeight()),
+                                widget.getY() - widget.getHeight(),
+                                height, widget.getUuid(),
+                                spatialService::rearrangeByBottomSideIndex, widget::setWidth);
+                    }
                     widget.setzIndex(zIndex != null ? zIndex : widget.getzIndex());
                 };
         result.visit(widgetUpdater);
@@ -74,17 +86,18 @@ public class WidgetsServiceImpl implements WidgetsService {
     /**
      * Вспомогательный метод для обновления атрибутов виджета и перестройки индекса
      *
-     * @param value        новое значение атрибута
-     * @param oldValue     старое значение атрибута
+     * @param key          новое значение индекса, который перестраиваем
+     * @param oldKey       старое значение индекса, который перестраиваем
+     * @param value        новое значение для вставки в индекс
      * @param uuid         идентификатор виджета
      * @param rearranger   метод для перестройки индекса
      * @param valueChanger метод для смены старого значения на новое
      */
-    private void updateAndRearrangeWithCheck(@Nullable Long value, @NonNull Long oldValue, @NonNull UUID uuid, @NonNull TernaryConsumer<Long, Long, UUID> rearranger, @NonNull Consumer<Long> valueChanger) {
-        if (value == null || value.compareTo(oldValue) == 0) {
+    private void updateAndRearrangeWithCheck(@NonNull Long key, @NonNull Long oldKey, @Nullable Long value, @NonNull UUID uuid, @NonNull TernaryConsumer<Long, Long, UUID> rearranger, @NonNull Consumer<Long> valueChanger) {
+        if (key == null || key.compareTo(oldKey) == 0 || value == null) {
             return;
         }
-        rearranger.accept(oldValue, value, uuid);
+        rearranger.accept(oldKey, key, uuid);
         valueChanger.accept(value);
     }
 
@@ -133,10 +146,10 @@ public class WidgetsServiceImpl implements WidgetsService {
         }
 
         //Ну и добавим в индексы...
-        spatialService.addToByXIndex(widget.getX(), widget.getUuid());
-        spatialService.addToByYIndex(widget.getY(), widget.getUuid());
-        spatialService.addToByWidthIndex(widget.getWidth(), widget.getUuid());
-        spatialService.addToByHeightIndex(widget.getHeight(), widget.getUuid());
+        spatialService.addToByLeftSideIndex(widget.getX(), widget.getUuid());
+        spatialService.addToByTopSideIndex(widget.getY(), widget.getUuid());
+        spatialService.addToByRightSideIndex(widget.getX() + widget.getWidth(), widget.getUuid());
+        spatialService.addToByBottomSideIndex(widget.getY() - widget.getHeight(), widget.getUuid());
 
         return widget;
     }
