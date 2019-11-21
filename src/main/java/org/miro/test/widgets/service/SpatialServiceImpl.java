@@ -6,41 +6,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
 @Primary
 public class SpatialServiceImpl implements SpatialService {
-    private SortedMap<Long, Set<UUID>> indexByX = new TreeMap<>(Long::compareTo);
-    private SortedMap<Long, Set<UUID>> indexByY = new TreeMap<>(Long::compareTo);
-    private SortedMap<Long, Set<UUID>> indexByWidth = new TreeMap<>(Long::compareTo);
-    private SortedMap<Long, Set<UUID>> indexByHeight = new TreeMap<>(Long::compareTo);
+    protected SortedMap<Long, Set<UUID>> indexByLeftSide = new TreeMap<>(Long::compareTo);
+    protected SortedMap<Long, Set<UUID>> indexByTopSide = new TreeMap<>(Long::compareTo);
+    protected SortedMap<Long, Set<UUID>> indexByRightside = new TreeMap<>(Long::compareTo);
+    protected SortedMap<Long, Set<UUID>> indexByBottomSide = new TreeMap<>(Long::compareTo);
 
     @Override
     public Set<UUID> findByPosition(Long x, Long y, Long width, Long height) {
         //Строим промежуточные множества по X, Y, Width и Height
-        Set<UUID> byX = getValuesFromIndex(indexByX.tailMap(x));
+        Set<UUID> byLeftSide = getValuesFromIndex(indexByLeftSide.tailMap(x)); // правее левой границы
+        Set<UUID> byBottomSide = getValuesFromIndex(indexByBottomSide.tailMap(y - height)); // выше нижней
 
-        Set<UUID> byY = getValuesFromIndex(indexByY.headMap(y));
-        if(!CollectionUtils.isEmpty(indexByY.get(y))){
-            byY.addAll(indexByY.get(y));
+        Set<UUID> byRightSide = getValuesFromIndex(indexByRightside.headMap(x + width)); // левее правой границы
+        if(!CollectionUtils.isEmpty(indexByRightside.get(x + width))){
+            byRightSide.addAll(indexByRightside.get(x + width));
         }
-
-        Set<UUID> byWidth = getValuesFromIndex(indexByWidth.headMap(width));
-        if(!CollectionUtils.isEmpty(indexByWidth.get(width))){
-            byWidth.addAll(indexByWidth.get(width));
-        }
-
-        Set<UUID> byHeight = getValuesFromIndex(indexByHeight.headMap(height));
-        if(!CollectionUtils.isEmpty(indexByHeight.get(height))){
-            byHeight.addAll(indexByHeight.get(height));
-
+        Set<UUID> byTopSide = getValuesFromIndex(indexByTopSide.headMap(y)); // ниже верхней границы
+        if(!CollectionUtils.isEmpty(indexByTopSide.get(y))){
+            byTopSide.addAll(indexByTopSide.get(y));
         }
 
         //Нам подходят только те UUID, которые есть во всех множествах одновременно. Собираем из них результат.
         Set<UUID> result =
-                byX.stream().filter(byY::contains).filter(byWidth::contains).filter(byHeight::contains).collect(Collectors.toSet());
+                byLeftSide.stream().filter(byTopSide::contains).filter(byRightSide::contains).filter(byBottomSide::contains).collect(Collectors.toSet());
         return result;
     }
 
@@ -53,31 +46,31 @@ public class SpatialServiceImpl implements SpatialService {
     }
 
     @Override
-    public void addToByXIndex(Long key, UUID value) {
-        addToIndex(key, value, indexByX);
+    public void addToByLeftSideIndex(Long key, UUID value) {
+        addToIndex(key, value, indexByLeftSide);
     }
 
     @Override
-    public void addToByYIndex(Long key, UUID value) {
-        addToIndex(key, value, indexByY);
+    public void addToByTopSideIndex(Long key, UUID value) {
+        addToIndex(key, value, indexByTopSide);
     }
 
     @Override
-    public void addToByWidthIndex(Long key, UUID value) {
-        addToIndex(key, value, indexByWidth);
+    public void addToByRightSideIndex(Long key, UUID value) {
+        addToIndex(key, value, indexByRightside);
     }
 
     @Override
-    public void addToByHeightIndex(Long key, UUID value) {
-        addToIndex(key, value, indexByHeight);
+    public void addToByBottomSideIndex(Long key, UUID value) {
+        addToIndex(key, value, indexByBottomSide);
     }
 
     @Override
     public void removeFromIndexes(Widget widget) {
-        removeFromIndex(indexByX.get(widget.getX()), widget.getUuid());
-        removeFromIndex(indexByY.get(widget.getY()), widget.getUuid());
-        removeFromIndex(indexByWidth.get(widget.getWidth()), widget.getUuid());
-        removeFromIndex(indexByHeight.get(widget.getHeight()), widget.getUuid());
+        removeFromIndex(indexByLeftSide.get(widget.getX()), widget.getUuid());
+        removeFromIndex(indexByTopSide.get(widget.getY()), widget.getUuid());
+        removeFromIndex(indexByRightside.get(widget.getWidth()), widget.getUuid());
+        removeFromIndex(indexByBottomSide.get(widget.getHeight()), widget.getUuid());
     }
 
     /**
@@ -94,23 +87,23 @@ public class SpatialServiceImpl implements SpatialService {
     }
 
     @Override
-    public void rearrangeByXIndex(Long oldKey, Long newKey, UUID value) {
-        rearrangeIndex(oldKey, newKey, value, indexByX);
+    public void rearrangeByLeftSideIndex(Long oldKey, Long newKey, UUID value) {
+        rearrangeIndex(oldKey, newKey, value, indexByLeftSide);
     }
 
     @Override
-    public void rearrangeByYIndex(Long oldKey, Long newKey, UUID value) {
-        rearrangeIndex(oldKey, newKey, value, indexByY);
+    public void rearrangeByTopSideIndex(Long oldKey, Long newKey, UUID value) {
+        rearrangeIndex(oldKey, newKey, value, indexByTopSide);
     }
 
     @Override
-    public void rearrangeByWidthIndex(Long oldKey, Long newKey, UUID value) {
-        rearrangeIndex(oldKey, newKey, value, indexByWidth);
+    public void rearrangeByRightSideIndex(Long oldKey, Long newKey, UUID value) {
+        rearrangeIndex(oldKey, newKey, value, indexByRightside);
     }
 
     @Override
-    public void rearrangeByHeightIndex(Long oldKey, Long newKey, UUID value) {
-        rearrangeIndex(oldKey, newKey, value, indexByHeight);
+    public void rearrangeByBottomSideIndex(Long oldKey, Long newKey, UUID value) {
+        rearrangeIndex(oldKey, newKey, value, indexByBottomSide);
     }
 
     /**

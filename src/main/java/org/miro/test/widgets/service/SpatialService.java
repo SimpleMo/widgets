@@ -7,17 +7,17 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface SpatialService {
-    void addToByXIndex (Long key, UUID value);
-    void addToByYIndex (Long key, UUID value);
-    void addToByWidthIndex (Long key, UUID value);
-    void addToByHeightIndex (Long key, UUID value);
+    void addToByLeftSideIndex(Long key, UUID value);
+    void addToByTopSideIndex(Long key, UUID value);
+    void addToByRightSideIndex(Long key, UUID value);
+    void addToByBottomSideIndex(Long key, UUID value);
 
     void removeFromIndexes(Widget widget);
 
-    void rearrangeByXIndex (Long oldKey, Long newKey, UUID value);
-    void rearrangeByYIndex (Long oldKey, Long newKey, UUID value);
-    void rearrangeByWidthIndex (Long oldKey, Long newKey, UUID value);
-    void rearrangeByHeightIndex (Long oldKey, Long newKey, UUID value);
+    void rearrangeByLeftSideIndex(Long oldKey, Long newKey, UUID value);
+    void rearrangeByTopSideIndex(Long oldKey, Long newKey, UUID value);
+    void rearrangeByRightSideIndex(Long oldKey, Long newKey, UUID value);
+    void rearrangeByBottomSideIndex(Long oldKey, Long newKey, UUID value);
 
     Set<UUID> findByPosition(@NonNull Long x, @NonNull Long y, @NonNull Long width, @NonNull Long height);
 }
