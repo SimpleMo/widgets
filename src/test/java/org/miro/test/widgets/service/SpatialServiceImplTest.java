@@ -130,4 +130,10 @@ class SpatialServiceImplTest {
         Set<UUID> found = spatialService.findByPosition(0L, 3L, 3L, 3L);
         assertEquals(0, found.size());
     }
+
+    @Test
+    void leftSideOfPatternIsToTheRightOfAnyWidget() {
+        Set<UUID> found = spatialService.findByPosition(12L, 9L, 6L, 9L);
+        assertEquals(0, found.size());
+    }
 }
