@@ -1,5 +1,6 @@
 package org.miro.test.widgets.service;
 
+import org.miro.test.widgets.controller.WidgetsController;
 import org.miro.test.widgets.model.Widget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
@@ -13,7 +14,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class WidgetsServiceImpl implements WidgetsService {
-    private Map<UUID, Widget> widgets = new HashMap<>();
+    @Autowired
+    private WidgetCollection widgets;
     private Long defaultZIndex = 0L;
 
     @Autowired
@@ -37,7 +39,7 @@ public class WidgetsServiceImpl implements WidgetsService {
     public Widget createWidget(Long x, Long y, Long zIndex, Long width, Long height) {
         Widget widget = getNewWidget(x, y, zIndex, width, height);
         if(zIndex != null){
-            correctZIndex(widget.getzIndex());
+            widgets.correctZIndex(widget.getzIndex());
         }
         widgets.put(widget.getUuid(), widget);
 
@@ -152,17 +154,6 @@ public class WidgetsServiceImpl implements WidgetsService {
         spatialService.addToByBottomSideIndex(widget.getY() - widget.getHeight(), widget.getUuid());
 
         return widget;
-    }
-
-    /**
-     * Сдвигаем все виджеты в списке, у которых Z-Index >= переданному в большую сторону
-     * @param zIndex индекс
-     */
-    private void correctZIndex(Long zIndex) {
-        Consumer<Widget> consumer = widget -> widget.setzIndex(widget.getzIndex() + 1);
-        widgets.entrySet().stream()
-                .filter(entry -> entry.getValue().getzIndex().compareTo(zIndex) >= 0)
-                .forEach(entry ->  entry.getValue().visit(consumer));
     }
 
 }
