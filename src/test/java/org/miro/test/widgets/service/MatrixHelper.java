@@ -1,13 +1,16 @@
 package org.miro.test.widgets.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public interface MatrixHelper {
-    Set<UUID> getIndexByX(Long x);
-    Set<UUID> getIndexByY(Long y);
-    Set<UUID> getIndexByWidth(Long width);
-    Set<UUID> getIndexByHeight(Long height);
+    Set<UUID> getIndexByLeftSide(Long leftSide);
+    Set<UUID> getIndexByTopSide(Long topSide);
+    Set<UUID> getIndexByRightSide(Long rightSide);
+    Set<UUID> getIndexByBottomSide(Long bottomSide);
+
+    List<Set<UUID>> getAllItems();
 
     void clearIndexes();
 }
