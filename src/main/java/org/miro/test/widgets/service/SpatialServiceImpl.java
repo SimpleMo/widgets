@@ -69,8 +69,8 @@ public class SpatialServiceImpl implements SpatialService {
     public void removeFromIndexes(Widget widget) {
         removeFromIndex(indexByLeftSide.get(widget.getX()), widget.getUuid());
         removeFromIndex(indexByTopSide.get(widget.getY()), widget.getUuid());
-        removeFromIndex(indexByRightside.get(widget.getWidth()), widget.getUuid());
-        removeFromIndex(indexByBottomSide.get(widget.getHeight()), widget.getUuid());
+        removeFromIndex(indexByRightside.get(widget.getX() + widget.getWidth()), widget.getUuid());
+        removeFromIndex(indexByBottomSide.get(widget.getY() - widget.getHeight()), widget.getUuid());
     }
 
     /**
@@ -134,7 +134,11 @@ public class SpatialServiceImpl implements SpatialService {
      * @param index  индекс, который перестраиваем
      */
     private void rearrangeIndex(Long oldKey, Long newKey, UUID value, SortedMap<Long, Set<UUID>> index) {
-        index.get(oldKey).remove(value);
+        Set<UUID> uuids = index.get(oldKey);
+        if(!CollectionUtils.isEmpty(uuids)){
+            uuids.remove(value);
+        }
+
         addToIndex(newKey, value, index);
     }
 }
