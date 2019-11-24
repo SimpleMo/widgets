@@ -12,6 +12,7 @@ public interface WidgetCollection {
     Widget get(UUID uuid);
     Widget put(UUID key, Widget value);
     Widget remove(UUID key);
+    void clear();
 
     /**
      * Сдвигаем все виджеты в списке, у которых Z-Index >= переданному в большую сторону

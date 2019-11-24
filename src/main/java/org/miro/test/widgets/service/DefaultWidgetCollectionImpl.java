@@ -41,6 +41,11 @@ public class DefaultWidgetCollectionImpl implements WidgetCollection {
     }
 
     @Override
+    public void clear() {
+        widgets.clear();
+    }
+
+    @Override
     public void correctZIndex(Long zIndex) {
         Consumer<Widget> consumer = widget -> widget.setzIndex(widget.getzIndex() + 1);
         widgets.entrySet().stream()
