@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.miro.test.widgets.model.Widget;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Collection;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefaultWidgetCollectionImplTest {
 
     @Autowired
+    @Qualifier("concurrentWidgetsCollectionImpl")
     private WidgetCollection widgetCollection;
     private Set<Widget> widgets = new HashSet<>();
     private Widget widget;
