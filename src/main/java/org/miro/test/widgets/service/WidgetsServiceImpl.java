@@ -3,6 +3,7 @@ package org.miro.test.widgets.service;
 import org.miro.test.widgets.controller.WidgetsController;
 import org.miro.test.widgets.model.Widget;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class WidgetsServiceImpl implements WidgetsService {
     @Autowired
+    @Qualifier("concurrentWidgetsCollectionImpl")
     private WidgetCollection widgets;
     private Long defaultZIndex = 0L;
 

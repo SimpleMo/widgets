@@ -1,6 +1,5 @@
 package org.miro.test.widgets.service;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.miro.test.widgets.model.Widget;
