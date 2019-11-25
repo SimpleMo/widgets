@@ -17,7 +17,7 @@ public class WidgetsController {
 
     @Autowired
     protected WidgetsService widgetsService;
-    private RateLimiter limiter = RateLimiter.create(10.0);
+    private RateLimiter limiter = RateLimiter.create(100.0);
 
     @GetMapping
     public List<Widget> getWidgets(){
