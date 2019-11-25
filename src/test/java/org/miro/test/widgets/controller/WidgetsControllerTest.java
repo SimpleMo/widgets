@@ -8,6 +8,7 @@ import org.miro.test.widgets.model.Widget;
 import org.miro.test.widgets.service.SpatialService;
 import org.miro.test.widgets.service.WidgetCollection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -31,6 +32,7 @@ class WidgetsControllerTest {
     private ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
+    @Qualifier("concurrentWidgetsCollectionImpl")
     private WidgetCollection widgetCollection;
 
     @Autowired

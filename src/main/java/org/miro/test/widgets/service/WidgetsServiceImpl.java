@@ -19,7 +19,6 @@ public class WidgetsServiceImpl implements WidgetsService {
     @Qualifier("concurrentWidgetsCollectionImpl")
     private WidgetCollection widgets;
     private Long defaultZIndex = 0L;
-    private Set<Long> existedZIndexes = new HashSet<>();
 
     @Autowired
     private SpatialService spatialService;
@@ -42,10 +41,8 @@ public class WidgetsServiceImpl implements WidgetsService {
     public Widget createWidget(Long x, Long y, Long zIndex, Long width, Long height) {
         Widget widget = getNewWidget(x, y, zIndex, width, height);
 
-        if(zIndex != null && existedZIndexes.contains(zIndex)){
+        if(needCorrectZIndex(zIndex)){
             widgets.correctZIndex(widget.getzIndex());
-        } else if (!existedZIndexes.contains(zIndex)){
-            existedZIndexes.add(zIndex);
         }
 
         widgets.put(widget.getUuid(), widget);
@@ -53,11 +50,16 @@ public class WidgetsServiceImpl implements WidgetsService {
         return widget;
     }
 
-    private void putToSortedMap(SortedMap<Long, List<Widget>> sortedMap, Long key, Widget value) {
-        if(!sortedMap.containsKey(key)){
-            sortedMap.put(key, new LinkedList<>());
+    /**
+     * @param zIndex Z-Index добавляемого виджета
+     * @return true, если нужно корректировать индексы ранее добавленных виджетов, в противном случае - false
+     */
+    private boolean needCorrectZIndex(Long zIndex) {
+        if(zIndex == null){
+            return false;
         }
-        sortedMap.get(key).add(value);
+
+        return widgets.values().stream().anyMatch(item -> zIndex.equals(item.getzIndex()));
     }
 
     @Override
