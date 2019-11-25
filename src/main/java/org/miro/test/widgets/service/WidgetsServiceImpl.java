@@ -17,6 +17,7 @@ public class WidgetsServiceImpl implements WidgetsService {
     @Autowired
     private WidgetCollection widgets;
     private Long defaultZIndex = 0L;
+    private Set<Long> existedZIndexes = new HashSet<>();
 
     @Autowired
     private SpatialService spatialService;
@@ -38,9 +39,13 @@ public class WidgetsServiceImpl implements WidgetsService {
     @Override
     public Widget createWidget(Long x, Long y, Long zIndex, Long width, Long height) {
         Widget widget = getNewWidget(x, y, zIndex, width, height);
-        if(zIndex != null){
+
+        if(zIndex != null && existedZIndexes.contains(zIndex)){
             widgets.correctZIndex(widget.getzIndex());
+        } else if (!existedZIndexes.contains(zIndex)){
+            existedZIndexes.add(zIndex);
         }
+
         widgets.put(widget.getUuid(), widget);
 
         return widget;
