@@ -45,24 +45,28 @@ public class SpatialServiceImpl implements SpatialService {
         return uuids;
     }
 
-    @Override
-    public void addToByLeftSideIndex(Long key, UUID value) {
+    private void addToByLeftSideIndex(Long key, UUID value) {
         addToIndex(key, value, indexByLeftSide);
     }
 
-    @Override
-    public void addToByTopSideIndex(Long key, UUID value) {
+    private void addToByTopSideIndex(Long key, UUID value) {
         addToIndex(key, value, indexByTopSide);
     }
 
-    @Override
-    public void addToByRightSideIndex(Long key, UUID value) {
+    private void addToByRightSideIndex(Long key, UUID value) {
         addToIndex(key, value, indexByRightside);
     }
 
-    @Override
-    public void addToByBottomSideIndex(Long key, UUID value) {
+    private void addToByBottomSideIndex(Long key, UUID value) {
         addToIndex(key, value, indexByBottomSide);
+    }
+
+    @Override
+    public void addToIndexes(Widget widget) {
+        addToByLeftSideIndex(widget.getX(), widget.getUuid());
+        addToByTopSideIndex(widget.getY(), widget.getUuid());
+        addToByRightSideIndex(widget.getX() + widget.getWidth(), widget.getUuid());
+        addToByBottomSideIndex(widget.getY() - widget.getHeight(), widget.getUuid());
     }
 
     @Override

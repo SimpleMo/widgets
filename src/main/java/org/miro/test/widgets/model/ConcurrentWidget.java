@@ -20,8 +20,8 @@ public class ConcurrentWidget extends Widget {
      * @return обёрнутый декоратором объект-виджет
      */
     public Widget getWrappee() {
+        resource.lock();
         try {
-            resource.lock();
             return wrappee;
         } finally {
             resource.unlock();
@@ -49,7 +49,7 @@ public class ConcurrentWidget extends Widget {
 
     @Override
     public void setY(Long y) {
-        wrappee.setY(y);
+        visit(widget -> widget.setY(y));
     }
 
     @Override
@@ -98,8 +98,8 @@ public class ConcurrentWidget extends Widget {
      */
     @Override
     public void visit(Consumer<Widget> visitor) {
+        resource.lock();
         try {
-            resource.lock();
             wrappee.visit(visitor);
         } finally {
             resource.unlock();

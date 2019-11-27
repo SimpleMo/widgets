@@ -8,12 +8,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
 public class ConcurrentWidgetsCollectionImpl implements WidgetCollection {
     private Map<UUID, ConcurrentWidget> widgets = new HashMap<>();
+    private ReentrantLock widgetsAsResource = new ReentrantLock();
 
     @Override
     public boolean isEmpty() {
@@ -32,25 +34,46 @@ public class ConcurrentWidgetsCollectionImpl implements WidgetCollection {
 
     @Override
     public Widget put(UUID key, Widget value) {
-        return widgets.put(key, new ConcurrentWidget(value));
+        widgetsAsResource.lock(); // работаем с коллекцией в целом только из защищённого блока.
+        try {
+            return widgets.put(key, new ConcurrentWidget(value));
+        } finally {
+            widgetsAsResource.unlock();
+        }
     }
 
     @Override
     public Widget remove(UUID key) {
-        ConcurrentWidget removed = widgets.remove(key);
+        widgetsAsResource.lock();
+        ConcurrentWidget removed;
+        try {
+            removed = widgets.remove(key);
+        } finally {
+            widgetsAsResource.unlock();
+        }
         return removed != null ? removed.getWrappee() : null;
     }
 
     @Override
     public void clear() {
-        widgets.clear();
+        widgetsAsResource.lock();
+        try {
+            widgets.clear();
+        } finally {
+            widgetsAsResource.unlock();
+        }
     }
 
     @Override
     public void correctZIndex(Long zIndex) {
-        Consumer<Widget> consumer = widget -> widget.setzIndex(widget.getzIndex() + 1);
-        widgets.entrySet().stream()
-                .filter(entry -> entry.getValue().getzIndex().compareTo(zIndex) >= 0)
-                .forEach(entry ->  entry.getValue().visit(consumer));
+        widgetsAsResource.lock(); // комментарий 4. Работать с коллекцией в целом тут должны в защищённом блоке. Не смотря на то, что с кокретным виджетом уже работаем в защищенных блоках.
+        try {
+            Consumer<Widget> consumer = widget -> widget.setzIndex(widget.getzIndex() + 1);
+            widgets.entrySet().stream()
+                    .filter(entry -> entry.getValue().getzIndex().compareTo(zIndex) >= 0)
+                    .forEach(entry ->  entry.getValue().visit(consumer));
+        } finally {
+            widgetsAsResource.unlock();
+        }
     }
 }

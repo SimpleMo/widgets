@@ -20,7 +20,7 @@ public class WidgetsController {
     private RateLimiter limiter = RateLimiter.create(100.0);
 
     @GetMapping
-    public List<Widget> getWidgets(){
+    public Collection<Widget> getWidgets(){
         return widgetsService.getWidgets();
     }
 

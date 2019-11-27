@@ -44,12 +44,7 @@ class SpatialServiceImplTest {
         //Добавляем те виджеты, что получились, в инжексы
         widgets
             .stream()
-            .forEach(widget -> {
-                spatialService.addToByLeftSideIndex(widget.getX(), widget.getUuid());
-                spatialService.addToByTopSideIndex(widget.getY(), widget.getUuid());
-                spatialService.addToByRightSideIndex(widget.getX() + widget.getWidth(), widget.getUuid());
-                spatialService.addToByBottomSideIndex(widget.getY() - widget.getHeight(), widget.getUuid());
-            });
+            .forEach(spatialService::addToIndexes);
     }
 
     /**

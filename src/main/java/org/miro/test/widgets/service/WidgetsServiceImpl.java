@@ -1,6 +1,5 @@
 package org.miro.test.widgets.service;
 
-import org.miro.test.widgets.controller.WidgetsController;
 import org.miro.test.widgets.model.Widget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -10,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -20,32 +21,50 @@ public class WidgetsServiceImpl implements WidgetsService {
     private WidgetCollection widgets;
     private Long defaultZIndex = 0L;
 
+    private ReentrantLock newWidgetAsResource = new ReentrantLock(); // лок для работы с создаваемыми виджетами
+    private ReentrantLock widgetsAsResource = new ReentrantLock(); // лок для работы с коллецией виджетов
+
     @Autowired
+    @Qualifier("concurrentSpatialServiceDecorator")
     private SpatialService spatialService;
 
     @Override
-    public List<Widget> getWidgets() {
+    public Collection<Widget> getWidgets() {
         if(widgets.isEmpty()){
-            return new ArrayList<>();
+            return Collections.emptyList(); // комментарий 1. Теперь будет возвращаться всегда один и тот же пустой список
         }
 
-        return new ArrayList<>(widgets.values());
+        return widgets.values(); // тут не получим редактируемый виджет, поскольку элементы в список добавляются в защищенном коде
     }
 
     @Override
     public Widget findByUuid(UUID uuid) {
-        return widgets.get(uuid);
+        widgetsAsResource.lock(); // синхронизировано, чтобы избежать проблем при конкурентном удалении (вернулось то, что по факту уже удалено).
+        try {
+            return widgets.get(uuid);
+        } finally {
+            widgetsAsResource.unlock();
+        }
     }
 
     @Override
     public Widget createWidget(Long x, Long y, Long zIndex, Long width, Long height) {
         Widget widget = getNewWidget(x, y, zIndex, width, height);
 
-        if(needCorrectZIndex(zIndex)){
-            widgets.correctZIndex(widget.getzIndex());
+        widgetsAsResource.lock(); // синхронизировано, чтобы избежать проблем при конкурентной работе со списком. needCorrectZIndex должны выполнить совместно с correctZIndex
+        try {
+            if(needCorrectZIndex(zIndex)){
+                widgets.correctZIndex(widget.getzIndex());
+            }
+
+        } finally {
+            widgetsAsResource.unlock();
         }
 
         widgets.put(widget.getUuid(), widget);
+
+        //Ну и добавим в индексы...
+        spatialService.addToIndexes(widget);
 
         return widget;
     }
@@ -56,7 +75,7 @@ public class WidgetsServiceImpl implements WidgetsService {
      */
     private boolean needCorrectZIndex(Long zIndex) {
         if(zIndex == null){
-            return false;
+            return widgets.values().stream().anyMatch(item -> defaultZIndex.equals(item.getzIndex()));
         }
 
         return widgets.values().stream().anyMatch(item -> zIndex.equals(item.getzIndex()));
@@ -64,9 +83,15 @@ public class WidgetsServiceImpl implements WidgetsService {
 
     @Override
     public Widget updateWidget(UUID uuid, Long x, Long y, Long zIndex, Long width, Long height) {
-        Widget result = widgets.get(uuid);
-        if(result == null){ // не нашлось, обновлять нечего
-            return null;
+        widgetsAsResource.lock(); // синхронизировано, чтобы не получить проблем, например, при конкурентном удалении и добавлении
+        Widget result;
+        try {
+            result = widgets.get(uuid);
+            if(result == null){ // не нашлось, обновлять нечего
+                return null;
+            }
+        } finally {
+            widgetsAsResource.unlock();
         }
 
         //Меняем значения атрибутов виджета и при необходимости перестраиваем индексы
@@ -86,11 +111,11 @@ public class WidgetsServiceImpl implements WidgetsService {
                                 (y != null ? y : widget.getY()) - (height != null ? height : widget.getHeight()),
                                 widget.getY() - widget.getHeight(),
                                 height, widget.getUuid(),
-                                spatialService::rearrangeByBottomSideIndex, widget::setWidth);
+                                spatialService::rearrangeByBottomSideIndex, widget::setHeight);
                     }
                     widget.setzIndex(zIndex != null ? zIndex : widget.getzIndex());
                 };
-        result.visit(widgetUpdater);
+        result.visit(widgetUpdater); // обновление потокобезопасно на уровне сервиса
         return result;
     }
 
@@ -114,14 +139,21 @@ public class WidgetsServiceImpl implements WidgetsService {
 
     @Override
     public Widget deleteWidget(UUID uuid) {
-        Widget widget = widgets.get(uuid);
-        if(widget == null){
-            return null;
-        }
+        Widget widget;
 
-        //Удаляем найденное из всех индексов и списков
-        spatialService.removeFromIndexes(widget);
-        widgets.remove(uuid);
+        widgetsAsResource.lock(); // синхронизировано, чтобы избежать проблем при конкурентном поиске и удалении + очистка индексов и удаление из коллекции должны быть выполнены атомарно
+        try {
+            widget = widgets.get(uuid);
+            if(widget == null){
+                return null;
+            }
+
+            //Удаляем найденное из всех индексов и списков
+            spatialService.removeFromIndexes(widget);
+            widgets.remove(uuid);
+        } finally {
+            widgetsAsResource.unlock();
+        }
 
         return widget;
     }
@@ -130,7 +162,7 @@ public class WidgetsServiceImpl implements WidgetsService {
     public List<Widget> findWidgetByPosition(Long x, Long y, Long width, Long height) {
         Set<UUID> uuids = spatialService.findByPosition(x, y, width, height);
         if(CollectionUtils.isEmpty(uuids)){
-            return new ArrayList<>();
+            return Collections.emptyList(); // тоже комментарий 1
         }
 
         return widgets.values().stream().filter(widget -> uuids.contains(widget.getUuid())).collect(Collectors.toList());
@@ -147,22 +179,21 @@ public class WidgetsServiceImpl implements WidgetsService {
      * @return новый виджет
      */
     private Widget getNewWidget(@NonNull Long x, @NonNull Long y, Long zIndex, @NonNull Long width, @NonNull Long height) {
-        Widget widget = new Widget(x, y, width, height, zIndex == null ? defaultZIndex : zIndex);
+        newWidgetAsResource.lock();
+        try {
+            Widget widget = new Widget(x, y, width, height, zIndex == null ? defaultZIndex : zIndex);
 
-        //Передний план мог поменяться...
-        if (zIndex == null) {
-            defaultZIndex--;
-        } else if (defaultZIndex.compareTo(zIndex) >= 0) {
-            defaultZIndex = zIndex;
+            //Передний план мог поменяться...
+            if (zIndex == null) {
+                defaultZIndex--;
+            } else if (defaultZIndex.compareTo(zIndex) >= 0) {
+                defaultZIndex = zIndex;
+            }
+
+            return widget;
+        } finally {
+            newWidgetAsResource.unlock();
         }
-
-        //Ну и добавим в индексы...
-        spatialService.addToByLeftSideIndex(widget.getX(), widget.getUuid());
-        spatialService.addToByTopSideIndex(widget.getY(), widget.getUuid());
-        spatialService.addToByRightSideIndex(widget.getX() + widget.getWidth(), widget.getUuid());
-        spatialService.addToByBottomSideIndex(widget.getY() - widget.getHeight(), widget.getUuid());
-
-        return widget;
     }
 
 }

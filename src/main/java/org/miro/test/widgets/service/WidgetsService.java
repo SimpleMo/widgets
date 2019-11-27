@@ -4,6 +4,7 @@ import org.miro.test.widgets.model.Widget;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ public interface WidgetsService {
     /**
      * @return список ранее созданных виджетов
      */
-    List<Widget> getWidgets();
+    Collection<Widget> getWidgets(); // комментарий 1. Изменена сигнатура метода => пропала необходимость явно создавать экземпляр List
 
     /**
      * Возвращает виджет по переданному идентификатору

@@ -7,10 +7,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface SpatialService {
-    void addToByLeftSideIndex(Long key, UUID value);
-    void addToByTopSideIndex(Long key, UUID value);
-    void addToByRightSideIndex(Long key, UUID value);
-    void addToByBottomSideIndex(Long key, UUID value);
+
+    void addToIndexes(Widget widget);
 
     void removeFromIndexes(Widget widget);
 
