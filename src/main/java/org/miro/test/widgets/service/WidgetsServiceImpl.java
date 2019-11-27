@@ -53,7 +53,7 @@ public class WidgetsServiceImpl implements WidgetsService {
 
         widgetsAsResource.lock(); // синхронизировано, чтобы избежать проблем при конкурентной работе со списком. needCorrectZIndex должны выполнить совместно с correctZIndex
         try {
-            if(needCorrectZIndex(zIndex)){
+            if(needCorrectZIndex(widget.getzIndex())){
                 widgets.correctZIndex(widget.getzIndex());
             }
 
@@ -74,10 +74,6 @@ public class WidgetsServiceImpl implements WidgetsService {
      * @return true, если нужно корректировать индексы ранее добавленных виджетов, в противном случае - false
      */
     private boolean needCorrectZIndex(Long zIndex) {
-        if(zIndex == null){
-            return widgets.values().stream().anyMatch(item -> defaultZIndex.equals(item.getzIndex()));
-        }
-
         return widgets.values().stream().anyMatch(item -> zIndex.equals(item.getzIndex()));
     }
 
